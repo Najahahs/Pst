@@ -2,136 +2,151 @@ import requests
 import os
 import re
 import time
-import sys
-import http.server
-import socketserver
-import threading
+import random
 from requests.exceptions import RequestException
 
-class MyHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b"   PIYUSH TH3 UNB39T9BL3")
+# Define constants for ANSI colors
+GREEN = "\033[1;37;m"
+RED = "\033[1;37;m"
+CYAN = "\033[1;37;m"
+YELLOW = "\033[1;37;m"
+BLUE = "\033[1;37;m"
+MAGENTA = "\033[1;37;m"
+RESET = "\033[0m"
 
-class FacebookCommenter:
-    def __init__(self):
-        self.comment_count = 0
+def cls():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-    def comment_on_post(self, cookies, post_id, comment, delay):
-        with requests.Session() as r:
-            r.headers.update({
-                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,/;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                'sec-fetch-site': 'none',
-                'accept-language': 'id,en;q=0.9',
-                'Host': 'business.facebook.com/business_locations',
-                'sec-fetch-user': '?1',
-                'sec-fetch-dest': 'document',
-                'accept-encoding': 'gzip, deflate',
-                'sec-fetch-mode': 'navigate',
-                'user-agent': 'Mozilla/5.0 (Linux; Android 13; SM-G960U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5790.166 Mobile Safari/537.36',
-                'connection': 'keep-alive',
-            })
+def lines():
+    print('\u001b[37m' + ' WELCOME TO ANIL TRICKER WALL TOOL')
 
-            response = r.get('https://business.facebook.com/business_locations/{}'.format(post_id), cookies={"cookie": cookies})
+def lines2():
+    print('\u001b[37m' + '[[✓]] <<===========ANIL-XD ONFIRE=========>>')
+def new_logo():
+    logo_text = r"""
 
-            next_action_match = re.search('method="post" action="([^"]+)"', response.text)
-            if next_action_match:
-                self.next_action = next_action_match.group(1).replace('amp;', '')
+
+    """
+    
+
+def read_cookie():
+    try:
+        lines()
+        cookies_file = input("\033[1;36m[•]Enter cookies file path  : ")
+        lines()
+        with open(cookies_file, 'r') as f:
+            return f.read().splitlines()
+    except FileNotFoundError:
+        print("\033[1;31m[!] FILE NOT FOUND. Please provide the correct file path.")
+        return None
+
+def make_request(url, headers, cookie):
+    try:
+        response = requests.get(url, headers=headers, cookies={'Cookie': cookie})
+        return response.text
+    except RequestException as e:
+        print(f"\033[1;31m[!] Error making request: {e}")
+        return None
+
+def extract_target_id(url):
+    if url.startswith("pfbid"):
+        return url.split('/')[0]
+    match = re.search(r'pfbid\w+|\d+', url)
+    return match.group(0) if match else None
+
+def get_profile_info(token_eaag):
+    try:
+        response = requests.get(f"https://graph.facebook.com/me?fields=id,name&access_token={token_eaag}")
+        profile_info = response.json()
+        return profile_info.get("name"), profile_info.get("id")
+    except RequestException:
+        print("\033[1;31m[!] Error fetching profile information.")
+        return None, None
+
+def main():
+    cls()
+    new_logo()
+    
+
+    while True:
+        cookies_data = read_cookie()
+        if cookies_data is None:
+            break
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 11; RMX2144 Build/RKQ1.201217.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.71 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/375.1.0.28.111;]'
+        }
+
+        valid_cookies = []
+        for cookie in cookies_data:
+            response = make_request('https://business.facebook.com/business_locations', headers, cookie)
+            if response:
+                token_eaag_match = re.search(r'(EAAG\w+)', response)
+                if token_eaag_match:
+                    valid_cookies.append((cookie, token_eaag_match.group(1)))
+                else:
+                    print("\033[1;31m[!] EAAG token not found in the response for cookie:", cookie)
             else:
-                print("<Error> Next action not found")
-                return
+                print("\033[1;31m[!] No response for cookie:", cookie)
 
-            fb_dtsg_match = re.search('name="fb_dtsg" value="([^"]+)"', response.text)
-            if fb_dtsg_match:
-                self.fb_dtsg = fb_dtsg_match.group(1)
-            else:
-                print("<Error> fb_dtsg not found")
-                return
+        if not valid_cookies:
+            print("\033[1;31m[!] No valid cookie found. Exiting...")
+            break
 
-            jazoest_match = re.search('name="jazoest" value="([^"]+)"', response.text)
-            if jazoest_match:
-                self.jazoest = jazoest_match.group(1)
-            else:
-                print("<Error> jazoest not found")
-                return
+        post_url = input("\033[1;34m[[=>]] FB post  link :")
+        target_id = extract_target_id(post_url)
+        if not target_id:
+            print("\033[1;31m[!] Invalid URL. Exiting...")
+            break
 
-            data = {
-                'fb_dtsg': self.fb_dtsg,
-                'jazoest': self.jazoest,
-                'comment_text': comment,
-                'comment': 'Submit',
-            }
+        commenter_name = input("\033[1;36m[[=>]] Add Hater's Name : ")
+        delay = int(input("\033[1;32m[[=>]] Comments sending time (seconds) : "))
+        comment_file_path = input("\033[1;36m[[=>]] Add comment file path : ")
 
-            r.headers.update({
-                'content-type': 'application/x-www-form-urlencoded',
-                'referer': 'https://business.facebook.com/business_locations/{}'.format(post_id),
-                'origin': 'https://business.facebook.com/business_locations',
-            })
-
-            response2 = r.post('https://business.facebook.com/business_locations{}'.format(self.next_action), data=data, cookies={"cookie": cookies})
-
-            if 'comment_success' in str(response2.url) and response2.status_code == 200:
-                self.comment_count += 1
-                sys.stdout.write(f"\rComment count: {self.comment_count}")
-                sys.stdout.flush()  # Flush the output
-                print(f"Comment successfully posted: {comment}")  # Add this line for debugging
-            else:
-                print(f"Comment Successfully Sent: {comment}, URL: {response2.url}, Status Code: {response2.status_code}")
-
-    def inputs(self):
         try:
-            with open('cookies.txt', 'r') as file:
-                your_cookies = file.read().splitlines()
-
-            if len(your_cookies) == 0:
-                print("<Error> The cookies file you entered is empty")
-                exit()
-
-            with open('post.txt', 'r') as file:
-                post_id = file.read().strip()
-
-            with open('comments.txt', 'r') as file:
+            with open(comment_file_path, 'r') as file:
                 comments = file.readlines()
+        except FileNotFoundError:
+            print("\033[1;31m[!] Comments file not found.")
+            break
 
-            with open('delay.txt', 'r') as file:
-                delay = int(file.read().strip())
+        x, cookie_index = 0, 0
+        while True:
+            try:
+                teks = comments[x].strip()
+                comment_with_name = f"{commenter_name}: {teks}"
+                current_cookie, token_eaag = valid_cookies[cookie_index]
 
-            cookie_index = 0  # Initialize the current cookie index to 0
+                # Fetch profile name and ID
+                profile_name, profile_id = get_profile_info(token_eaag)
+                if profile_name and profile_id:
+                    print(f"\033[1;32mLogged in as: {profile_name} (ID: {profile_id})")
 
-            while True:  # Infinite loop
-                try:
-                    for comment in comments:
-                        comment = comment.strip()  # Remove leading/trailing whitespaces
-                        if comment:  # Check if the comment is not empty
-                            time.sleep(delay)
-                            self.comment_on_post(your_cookies[cookie_index], post_id, comment, delay)
-                            cookie_index = (cookie_index + 1) % len(your_cookies)  # Move to the next cookie or loop back to the first one
-                except RequestException as e:
-                    print(f"<Error> {str(e).lower()}")
-                except Exception as e:
-                    print(f"<Error> {str(e).lower()}")
-                except KeyboardInterrupt:
-                    break
+                data = {
+                    'message': comment_with_name,
+                    'access_token': token_eaag
+                }
 
-        except Exception as e:
-            print(f"<Error> {str(e).lower()}")
-            exit()
+                response2 = requests.post(f'https://graph.facebook.com/{target_id}/comments/', data=data, cookies={'Cookie': current_cookie})
+                response_json = response2.json()
 
-def execute_server():
-    PORT = int(os.environ.get('PORT', 4000))
+                if 'id' in response_json:
+                    print(f"\033[1;32mComment sent successfully at {time.strftime('%Y-%m-%d %H:%M:%S')}: {comment_with_name}")
+                    lines2()
+                else:
+                    print("\033[1;31m[!] Comment failed:", response_json)
 
-    with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
-        print("Server running at http://localhost:{}".format(PORT))
-        httpd.serve_forever()
+                x = (x + 1) % len(comments)
+                cookie_index = (cookie_index + 1) % len(valid_cookies)
+                time.sleep(delay)
+
+            except RequestException as e:
+                print(f"\033[1;31m[!] Error making request: {e}")
+                time.sleep(5)
+                continue
+            except Exception as e:
+                print(f"\033[1;31m[!] An unexpected error occurred: {e}")
+                break
 
 if __name__ == "__main__":
-    # Create a thread for the HTTP server
-    server_thread = threading.Thread(target=execute_server)
-    server_thread.daemon = True  
-    server_thread.start()
-
-    # Run Facebook commenter
-    commenter = FacebookCommenter()
-    commenter.inputs()
+    main()
