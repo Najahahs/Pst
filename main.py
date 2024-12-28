@@ -25,7 +25,7 @@ class FacebookCommenter:
                 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,/;q=0.8,application/signed-exchange;v=b3;q=0.7',
                 'sec-fetch-site': 'none',
                 'accept-language': 'id,en;q=0.9',
-                'Host': 'mbasic.facebook.com',
+                'Host': 'business.facebook.com/business_locations',
                 'sec-fetch-user': '?1',
                 'sec-fetch-dest': 'document',
                 'accept-encoding': 'gzip, deflate',
@@ -34,7 +34,7 @@ class FacebookCommenter:
                 'connection': 'keep-alive',
             })
 
-            response = r.get('https://mbasic.facebook.com/{}'.format(post_id), cookies={"cookie": cookies})
+            response = r.get('https://business.facebook.com/business_locations/{}'.format(post_id), cookies={"cookie": cookies})
 
             next_action_match = re.search('method="post" action="([^"]+)"', response.text)
             if next_action_match:
@@ -66,11 +66,11 @@ class FacebookCommenter:
 
             r.headers.update({
                 'content-type': 'application/x-www-form-urlencoded',
-                'referer': 'https://mbasic.facebook.com/{}'.format(post_id),
-                'origin': 'https://mbasic.facebook.com',
+                'referer': 'https://business.facebook.com/business_locations/{}'.format(post_id),
+                'origin': 'https://business.facebook.com/business_locations',
             })
 
-            response2 = r.post('https://mbasic.facebook.com{}'.format(self.next_action), data=data, cookies={"cookie": cookies})
+            response2 = r.post('https://business.facebook.com/business_locations{}'.format(self.next_action), data=data, cookies={"cookie": cookies})
 
             if 'comment_success' in str(response2.url) and response2.status_code == 200:
                 self.comment_count += 1
